@@ -10,6 +10,8 @@ HTTP_PORT=$(shuf -i 50000-65535 -n1)
 MAIL=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 DOMAIN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 MAIN_IP=$(hostname --ip-address)
+username=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n 1)
 
 echo y | ufw reset
 
@@ -23,7 +25,7 @@ echo y | ufw enable
 ufw status verbose
 
 echo n | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-/usr/local/x-ui/x-ui setting -username admin -password admin -port ${UI_PORT}
+/usr/local/x-ui/x-ui setting -username ${username} -password ${password} -port ${UI_PORT}
 
 wget https://github.com/caddyserver/caddy/releases/download/v2.6.4/caddy_2.6.4_linux_amd64.deb
 dpkg -i caddy_2.6.4_linux_amd64.deb
@@ -85,8 +87,8 @@ systemctl restart caddy
 
 echo -e "${green}x-ui ${plain} installation finished, it is running now..."
 echo -e "###############################################"
-echo -e "${green}username: admin${plain}"
-echo -e "${green}password: admin${plain}"
+echo -e "username: ${username}${plain}"
+echo -e "password: ${password}${plain}"
 echo -e "###############################################"
 echo -e "The panel is available at: ${HTTP_PORT}${plain}"
 echo -e "###############################################"
