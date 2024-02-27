@@ -13,9 +13,9 @@ MAIN_IP=$(hostname --ip-address)
 username=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n 1)
 
-sudo apt-get update
-sudo apt-get upgrade -y
-sudo yes Y | sudo apt install ufw
+echo Enter | sudo apt-get update
+echo Enter | sudo apt-get upgrade -y
+echo y | sudo apt install ufw
 
 echo y | ufw reset
 
