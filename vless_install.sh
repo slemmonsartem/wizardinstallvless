@@ -29,7 +29,7 @@ echo y | ufw enable
 ufw status verbose
 
 echo n | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.2.8
-/usr/local/x-ui/x-ui setting -username ${username} -password ${password} -port ${UI_PORT} -webBasePath 5CFnKTdD
+/usr/local/x-ui/x-ui setting -username ${username} -password ${password} -port ${UI_PORT}
 
 wget https://github.com/caddyserver/caddy/releases/download/v2.6.4/caddy_2.6.4_linux_amd64.deb
 dpkg -i caddy_2.6.4_linux_amd64.deb
