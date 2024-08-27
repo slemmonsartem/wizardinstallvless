@@ -17,8 +17,6 @@ sudo apt-get update
 sudo apt-get upgrade -y
 echo y | sudo apt install ufw
 
-echo y | ufw reset
-
 ufw allow ${UI_PORT}/tcp
 ufw allow ${HTTP_PORT}/tcp
 ufw allow 443/tcp
