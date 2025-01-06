@@ -26,7 +26,7 @@ ufw allow 22/tcp
 echo y | ufw enable
 ufw status verbose
 
-echo n | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+echo n | bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.4.11
 /usr/local/x-ui/x-ui setting -username ${username} -password ${password} -port ${UI_PORT} -webBasePath "/"
 
 wget https://github.com/caddyserver/caddy/releases/download/v2.6.4/caddy_2.6.4_linux_amd64.deb
