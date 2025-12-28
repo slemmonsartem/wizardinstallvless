@@ -33,22 +33,57 @@ wget https://github.com/caddyserver/caddy/releases/download/v2.6.4/caddy_2.6.4_l
 dpkg -i caddy_2.6.4_linux_amd64.deb
 
 
-
-# Caddy config: ONLY this port, ONLY internal TLS, no https_port/http_port hacks
 rm -rf /etc/caddy/Caddyfile
-cat << EOF | sudo tee /etc/caddy/Caddyfile >/dev/null
+cat << EOF | sudo tee "/etc/caddy/Caddyfile" 
+
 {
-  auto_https off
-  log {
-    level ERROR
+    # auto_https will create redirects for https://{host}:8443 instead of https://{host}
+    # https redirects are added manually in the http://:80 block
+    auto_https disable_redirects
+    https_port ${HTTP_PORT}
+    http_port  10087
+    https_port 443
+    http_port 80
+    log {
+        level ERROR
+    }
+    on_demand_tls {
+    ask http://localhost:10087/
+                interval 3600s
+                burst 4
+  }
+
+}
+
+https://{\$IP}:${HTTP_PORT} {
+  reverse_proxy localhost:${UI_PORT}
+  tls internal {
+    on_demand
   }
 }
 
-:${HTTPS_PORT} {
-  tls internal
-  reverse_proxy 127.0.0.1:${UI_PORT}
+# Match only host names and not ip-addresses:
+https://*.*:${HTTP_PORT},
+https://*.*.*:${HTTP_PORT} {
+
+    reverse_proxy localhost:${UI_PORT}
+    tls {
+        on_demand 
+        issuer acme {
+            email  ${MAIL}@${DOMAIN}.com
+        }
+    }
 }
+
+
+http://:10087 {
+  respond "allowed" 200 {
+                close
+        }
+}
+
 EOF
+
 
 systemctl restart caddy
 
