@@ -183,6 +183,39 @@ PUBLIC_KEY=$(echo "$KEYS" | grep -i "Password" | sed -E 's/.*Password:\s*//')
 SHORT_ID=$(head -c 8 /dev/urandom | xxd -p)
 UUID=$(cat /proc/sys/kernel/random/uuid)
 EMAIL=$(tr -dc 'a-z0-9' </dev/urandom | head -c 8)
+
+# === Выбор SNI и DEST с наименьшим пингом ===
+DOMAINS=("web.max.ru")
+
+BEST_DOMAIN=""
+BEST_PING=9999
+
+echo -e "${green}Оцениваем пинг до рекомендуемых SNI...${plain}" >&3
+
+for domain in "${DOMAINS[@]}"; do
+    PING_RESULT=$(ping -c 4 -W 1 "$domain" 2>/dev/null | awk -F'time=' '/time=/{sum+=$2} END{if(NR>0) printf "%.2f", sum/NR}')
+
+    if [[ -n "$PING_RESULT" ]]; then
+        echo -e "  $domain: ${PING_RESULT} ms" >&3
+
+        PING_MS=$(printf "%.0f" "$PING_RESULT")
+
+        if [[ "$PING_MS" -lt "$BEST_PING" ]]; then
+            BEST_PING=$PING_MS
+            BEST_DOMAIN=$domain
+        fi
+    else
+        echo -e "  $domain: \033[0;31mнедоступен\033[0m" >&3
+    fi
+done
+
+if [[ -z "$BEST_DOMAIN" ]]; then
+    echo -e "${red}Не удалось определить доступный домен. Используем web.max.ru по умолчанию.${plain}" >&3
+    BEST_DOMAIN="web.max.ru"
+fi
+
+echo -e "${green}Выбран домен с наименьшим пингом: ${BEST_DOMAIN}${plain}" >&3
+
 # === Аутентификация в x-ui API ===
 COOKIE_JAR=$(mktemp)
 
@@ -210,8 +243,6 @@ SETTINGS_JSON=$(jq -nc --arg uuid "$UUID" --arg email "$EMAIL" '{
   decryption: "none"
 }')
 
-FINGERPRINTS=("firefox" "ios" "safari" "android" "edge" "qq")
-FINGERPRINT=${FINGERPRINTS[$((RANDOM % ${#FINGERPRINTS[@]}))]}
 
 STREAM_SETTINGS_JSON=$(jq -nc --arg pbk "$PUBLIC_KEY" --arg prk "$PRIVATE_KEY" --arg sid "$SHORT_ID" --arg dest "$DEST" --arg sni "$SNI" --argjson xver "$XVER" --arg fingerprint "$FINGERPRINT" '{
   network: "tcp",
@@ -417,7 +448,7 @@ if echo "$ADD_RESULT" | grep -q '"success":true'; then
     rm -f "$COOKIE_JAR"
 
     SERVER_IP=$(curl -s --max-time 3 https://api.ipify.org || curl -s --max-time 3 https://4.ident.me)
-    VLESS_LINK="vless://${UUID}@${SERVER_IP}:443?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&sni=${SNI}&allowInsecure=true&fp=${FINGERPRINT}&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F#${EMAIL}"
+    VLESS_LINK="vless://${UUID}@${SERVER_IP}:443?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&sni=${BEST_DOMAIN}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F#${EMAIL}"
 
     echo -e ""
     echo -e "\n\033[0;32mVLESS Reality успешно создан!\033[0m" >&3
